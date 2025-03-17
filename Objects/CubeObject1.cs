@@ -1,14 +1,17 @@
 using UnityEngine;
+using System.Collections;
 
 public enum ObjectColor { Red, Green, Blue, Yellow }
 
-public class CubeObject1 : MonoBehaviour, IGridObject, IFallable
+public class CubeObject1 : MonoBehaviour, IGridObject, IFallable, IAnimatableObject
 {
     // Start is called once before the first execution of Update after the MonoBehaviour is created
 
     private ObjectColor cubeColor;
     private GridManager gridManager;
     private Vector2Int gridPosition;
+    private bool isAnimating = false;
+    public bool IsAnimating => isAnimating;
 
 
     public void DoWork(){
@@ -40,6 +43,28 @@ public class CubeObject1 : MonoBehaviour, IGridObject, IFallable
 
     public void HandleFalling(){
     }
+
+
+
+
+    public void AnimateMove(Vector3 startPosition, Vector3 endPosition, float duration){
+          isAnimating = true;
+          StartCoroutine(MoveCoroutine(startPosition, endPosition, duration));
+    }
+
+    private IEnumerator MoveCoroutine(Vector3 startPosition, Vector3 endPosition, float duration){
+            float elapsedTime = 0f;
+
+            while (elapsedTime < duration)
+            {
+                transform.position = Vector3.Lerp(startPosition, endPosition, elapsedTime / duration);
+                elapsedTime += Time.deltaTime;
+                yield return null;
+            }
+
+            transform.position = endPosition;
+            isAnimating = false;
+     }
 
 
 

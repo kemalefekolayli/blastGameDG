@@ -139,9 +139,18 @@ public class GridManager : MonoBehaviour
             }
 
             // ✅ Mark position as "empty" in cubeMatrix
-            cubeMatrix[gridPosition.x, gridPosition.y] = "empty";
-            gridState[gridPosition] = null; // ✅ Also update the dictionary to reflect removal
-            fallHandler.HandleFalling();
+                cubeMatrix[gridPosition.x, gridPosition.y] = "empty";
+                gridState[gridPosition] = null;
+
+                // Call HandleFalling AFTER updating the grid state
+                if (fallHandler != null)
+                {
+                    fallHandler.HandleFalling();
+                }
+                else
+                {
+                    Debug.LogError("FallHandler is null!");
+                }
         }
         else
         {
