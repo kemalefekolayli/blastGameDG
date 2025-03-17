@@ -54,26 +54,33 @@ public class CubeObjectFactory : MonoBehaviour, ObjectFactory<CubeObject1>
         {
             cubeObject.Initialize(gridManager, gridPos);
 
-            // Set the color based on cube type
-            if (colorMap.TryGetValue(cubeType, out string colorName))
-            {
-                cubeObject.SetColor(colorName);
+            // Set the actual color code directly
+            cubeObject.SetColor(cubeType);
 
-                // Set the corresponding sprite
-                if (spriteMap.TryGetValue(colorName, out Sprite sprite))
-                {
-                    cubeObject.SetSprite(sprite);
-                }
+            // Set the sprite based on the cube type
+            if (cubeType == "r" || cubeType == "Red")
+            {
+                cubeObject.SetSprite(redCubeSprite);
+            }
+            else if (cubeType == "g" || cubeType == "Green")
+            {
+                cubeObject.SetSprite(greenCubeSprite);
+            }
+            else if (cubeType == "b" || cubeType == "Blue")
+            {
+                cubeObject.SetSprite(blueCubeSprite);
+            }
+            else if (cubeType == "y" || cubeType == "Yellow")
+            {
+                cubeObject.SetSprite(yellowCubeSprite);
             }
             else if (cubeType == "rand")
             {
-                // Random color selection
-                string[] colorNames = { "Red", "Green", "Blue", "Yellow" };
-                string randomColor = colorNames[Random.Range(0, colorNames.Length)];
-                cubeObject.SetColor(randomColor);
-                cubeObject.SetSprite(spriteMap[randomColor]);
+                // Choose a random sprite
+                Sprite[] sprites = { redCubeSprite, greenCubeSprite, blueCubeSprite, yellowCubeSprite };
+                cubeObject.SetSprite(sprites[Random.Range(0, sprites.Length)]);
             }
-            
+
             Debug.Log($"Created a {cubeType} cube at {location}");
             return cubeObject;
         }

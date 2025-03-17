@@ -7,8 +7,8 @@ public class GridManager : MonoBehaviour
     public static GridManager Instance { get; private set; } // ✅ Singleton
     private Transform gridParent;
     public GameObject cubePrefab;
-    private int gridWidth;
-    private int gridHeight;
+    public int gridWidth;
+    public int gridHeight;
     private float cellSize;
     private Vector2 gridStartPos;
     private string[,] cubeMatrix;

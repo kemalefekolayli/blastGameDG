@@ -91,15 +91,35 @@ public class CubeObject1 : MonoBehaviour, IGridObject, IFallable, IAnimatableObj
             spriteRenderer.sprite = sprite;
         }
 
-    public void SetColor(string colorCode)
+    public void SetColor(string color) // I know i should use builder for this BUT BOY am i tired
     {
-        switch(colorCode.ToLower())
+        // Direct mapping for the color codes used in the grid
+        if (color == "r")
+            cubeColor = ObjectColor.Red;
+        else if (color == "g")
+            cubeColor = ObjectColor.Green;
+        else if (color == "b")
+            cubeColor = ObjectColor.Blue;
+        else if (color == "y")
+            cubeColor = ObjectColor.Yellow;
+        else if (color == "rand")
         {
-            case "r": cubeColor = ObjectColor.Red; break;
-            case "g": cubeColor = ObjectColor.Green; break;
-            case "b": cubeColor = ObjectColor.Blue; break;
-            case "y": cubeColor = ObjectColor.Yellow; break;
-            default: Debug.LogWarning($"Unknown color code: {colorCode}"); break;
+            // Choose a random color
+            cubeColor = (ObjectColor)Random.Range(0, 4);
+        }
+        else
+        {
+            // Try to parse the full color name
+            if (System.Enum.TryParse(color, true, out ObjectColor parsedColor))
+            {
+                cubeColor = parsedColor;
+            }
+            else
+            {
+                Debug.LogWarning($"Invalid color: {color}");
+                // Default to a color to avoid errors
+                cubeColor = ObjectColor.Red;
+            }
         }
     }
 }
