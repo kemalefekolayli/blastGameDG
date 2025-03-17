@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+
 public class GridManager : MonoBehaviour
 {
     public static GridManager Instance { get; private set; } // ✅ Singleton
@@ -14,6 +15,54 @@ public class GridManager : MonoBehaviour
     public CubeObjectFactory cubeObjectFactory;
     private Dictionary<Vector2Int, IGridObject> gridState = new Dictionary<Vector2Int, IGridObject>();
     public CubeFallingHandler fallHandler;
+
+    // Add to GridManager.cs
+    public List<Vector2Int> FindMatchingGroup(Vector2Int startPos)
+    {
+        List<Vector2Int> matchingGroup = new List<Vector2Int>();
+        List<Vector2Int> toCheck = new List<Vector2Int>();
+        HashSet<Vector2Int> checkedPositions = new HashSet<Vector2Int>();
+
+        // Get the color of the starting cube
+        if (!gridState.TryGetValue(startPos, out IGridObject startObject) || !(startObject is CubeObject1 cube))
+            return matchingGroup;
+
+        ObjectColor targetColor = cube.getColor();
+        toCheck.Add(startPos);
+
+        while (toCheck.Count > 0)
+        {
+            Vector2Int current = toCheck[0];
+            toCheck.RemoveAt(0);
+
+            if (checkedPositions.Contains(current)) continue;
+            checkedPositions.Add(current);
+
+            // Check if this is a matching cube
+            if (gridState.TryGetValue(current, out IGridObject obj) &&
+                obj is CubeObject1 currentCube &&
+                currentCube.getColor() == targetColor)
+            {
+                matchingGroup.Add(current);
+
+                // Add adjacent positions to check
+                AddPositionIfValid(toCheck, new Vector2Int(current.x + 1, current.y), checkedPositions);
+                AddPositionIfValid(toCheck, new Vector2Int(current.x - 1, current.y), checkedPositions);
+                AddPositionIfValid(toCheck, new Vector2Int(current.x, current.y + 1), checkedPositions);
+                AddPositionIfValid(toCheck, new Vector2Int(current.x, current.y - 1), checkedPositions);
+            }
+        }
+
+        return matchingGroup;
+    }
+
+    private void AddPositionIfValid(List<Vector2Int> list, Vector2Int pos, HashSet<Vector2Int> checkedPositions)
+    {
+        if (pos.x >= 0 && pos.x < gridWidth && pos.y >= 0 && pos.y < gridHeight && !checkedPositions.Contains(pos))
+        {
+            list.Add(pos);
+        }
+    }
 
     void Awake()
     {
@@ -139,18 +188,18 @@ public class GridManager : MonoBehaviour
             }
 
             // ✅ Mark position as "empty" in cubeMatrix
-                cubeMatrix[gridPosition.x, gridPosition.y] = "empty";
-                gridState[gridPosition] = null;
+            cubeMatrix[gridPosition.x, gridPosition.y] = "empty";
+            gridState[gridPosition] = null;
 
-                // Call HandleFalling AFTER updating the grid state
-                if (fallHandler != null)
-                {
-                    fallHandler.HandleFalling();
-                }
-                else
-                {
-                    Debug.LogError("FallHandler is null!");
-                }
+            // Call HandleFalling AFTER updating the grid state
+            if (fallHandler != null)
+            {
+                fallHandler.HandleFalling();
+            }
+            else
+            {
+                Debug.LogError("FallHandler is null!");
+            }
         }
         else
         {
