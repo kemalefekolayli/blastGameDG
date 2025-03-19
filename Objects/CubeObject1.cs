@@ -6,6 +6,7 @@ public enum ObjectColor { Red, Green, Blue, Yellow }
 public class CubeObject1 : MonoBehaviour, IGridObject, IFallable, IAnimatableObject
 {
     [SerializeField] private SpriteRenderer spriteRenderer;
+    [SerializeField] private GameObject rocketHintOverlay;
     private ObjectColor cubeColor;
     private GridManager gridManager;
     private Vector2Int gridPosition;
@@ -125,4 +126,12 @@ public class CubeObject1 : MonoBehaviour, IGridObject, IFallable, IAnimatableObj
             }
         }
     }
+
+    public void ShowRocketHint(bool show)
+        {
+            if (rocketHintOverlay != null)
+            {
+                rocketHintOverlay.SetActive(show);
+            }
+        }
 }

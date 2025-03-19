@@ -17,6 +17,11 @@ public class GridManager : MonoBehaviour
     public ObstacleFactory obstacleFactory;
     public CubeFallingHandler fallHandler;
 
+    [Header("Rocket Setup")]
+    public GameObject rocketPrefab;
+    public Sprite horizontalRocketSprite;
+    public Sprite verticalRocketSprite;
+
     // Add to GridManager.cs
     public List<Vector2Int> FindMatchingGroup(Vector2Int startPos)
     {
@@ -337,6 +342,121 @@ private void CreateObstacleAtPosition(Vector2Int gridPos, string objectType)
 
         return matchingGroup;
     }
+
+    public void CreateRocket(Vector2Int position)
+        {
+            if (rocketPrefab == null)
+            {
+                Debug.LogError("Rocket prefab is not assigned!");
+                return;
+            }
+
+            // Calculate world position
+            Vector2 worldPos = new Vector2(
+                gridStartPos.x + (position.x * cellSize),
+                gridStartPos.y + (position.y * cellSize)
+            );
+
+            // Remove the existing cube first
+            RemoveCube(position);
+
+            // Create the rocket
+            GameObject rocketObj = Instantiate(rocketPrefab, new Vector3(worldPos.x, worldPos.y, 0), Quaternion.identity, gridParent);
+            rocketObj.transform.localScale = Vector3.one * (cellSize * 0.8f);
+
+            // Initialize the rocket
+            Rocket rocket = rocketObj.GetComponent<Rocket>();
+            if (rocket != null)
+            {
+                rocket.Initialize(this, position);
+
+                // Set the sprites
+                SpriteRenderer sr = rocketObj.GetComponent<SpriteRenderer>();
+                if (sr != null)
+                {
+                    // Assign sprites (these will be used based on direction)
+                    Rocket rocketComponent = rocketObj.GetComponent<Rocket>();
+                    if (rocketComponent != null)
+                    {
+                        // Use reflection to set private serialized fields
+                        System.Reflection.FieldInfo horizontalField = typeof(Rocket).GetField("horizontalRocketSprite",
+                            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+                        System.Reflection.FieldInfo verticalField = typeof(Rocket).GetField("verticalRocketSprite",
+                            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+                        if (horizontalField != null && verticalField != null)
+                        {
+                            horizontalField.SetValue(rocketComponent, horizontalRocketSprite);
+                            verticalField.SetValue(rocketComponent, verticalRocketSprite);
+                        }
+                    }
+                }
+
+                // Update the grid state and matrix
+                gridState[position] = rocket;
+
+                // Mark the cell as a rocket in the cube matrix (use 'hro' or 'vro' based on direction)
+                // Direction is randomly set in Rocket.Initialize, so we can't determine it here
+                // Use a generic code for now
+                cubeMatrix[position.x, position.y] = "ro"; // Generic rocket code
+
+                Debug.Log($"Created rocket at {position}");
+            }
+            else
+            {
+                Debug.LogError("Rocket component not found on prefab!");
+                Destroy(rocketObj);
+            }
+        }
+
+        // Remove a rocket from the grid
+        public void RemoveRocket(Vector2Int position)
+        {
+            if (gridState.TryGetValue(position, out IGridObject obj) && obj is Rocket)
+            {
+                MonoBehaviour rocketObj = obj as MonoBehaviour;
+                if (rocketObj != null)
+                {
+                    // Don't actually destroy the GameObject yet if it's part of an animation
+                    // Just mark it for removal from the grid
+                    Destroy(rocketObj.gameObject);
+                }
+
+                // Update the grid state and matrix
+                gridState[position] = null;
+                cubeMatrix[position.x, position.y] = "empty";
+            }
+        }
+
+        // Check if a group is eligible to create a rocket and display a rocket hint
+        public void CheckForRocketHint(List<Vector2Int> group)
+        {
+            if (group.Count >= 4)
+            {
+                // Visual indicator for rocket creation potential
+                foreach (Vector2Int pos in group)
+                {
+                    if (gridState.TryGetValue(pos, out IGridObject obj) && obj is CubeObject1 cube)
+                    {
+                        // Call a method on the cube to show rocket hint
+                        // This could add a rocket icon overlay to the cube
+                        cube.ShowRocketHint(true);
+                    }
+                }
+            }
+            else
+            {
+                // Clear any existing hints
+                foreach (Vector2Int pos in group)
+                {
+                    if (gridState.TryGetValue(pos, out IGridObject obj) && obj is CubeObject1 cube)
+                    {
+                        cube.ShowRocketHint(false);
+                    }
+                }
+            }
+        }
 
     public float GetCellSize() => cellSize;
     public int GetGridHeight() => gridHeight;
