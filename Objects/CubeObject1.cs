@@ -29,6 +29,7 @@ public class CubeObject1 : MonoBehaviour, IGridObject, IFallable, IAnimatableObj
 
     void OnMouseDown()
     {
+         Debug.LogError("BASTIN");
         if (gridManager == null)
         {
             Debug.LogError("GridManager is NULL in CubeObject!");
