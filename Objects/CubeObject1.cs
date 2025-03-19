@@ -6,12 +6,22 @@ public enum ObjectColor { Red, Green, Blue, Yellow }
 public class CubeObject1 : MonoBehaviour, IGridObject, IFallable, IAnimatableObject
 {
     [SerializeField] private SpriteRenderer spriteRenderer;
-    [SerializeField] private GameObject rocketHintOverlay;
+    [SerializeField] private Sprite redCubeSprite;
+    [SerializeField] private Sprite greenCubeSprite;
+    [SerializeField] private Sprite blueCubeSprite;
+    [SerializeField] private Sprite yellowCubeSprite;
+
+    [SerializeField] private Sprite redCubeRocketHintSprite;
+    [SerializeField] private Sprite greenCubeRocketHintSprite;
+    [SerializeField] private Sprite blueCubeRocketHintSprite;
+    [SerializeField] private Sprite yellowCubeRocketHintSprite;
+
     private ObjectColor cubeColor;
     private GridManager gridManager;
     private Vector2Int gridPosition;
     private bool isAnimating = false;
     public bool IsAnimating => isAnimating;
+
 
     public void DoWork(){
         Debug.Log("zort");
@@ -127,11 +137,33 @@ public class CubeObject1 : MonoBehaviour, IGridObject, IFallable, IAnimatableObj
         }
     }
 
+
+
     public void ShowRocketHint(bool show)
         {
-            if (rocketHintOverlay != null)
+            if (show)
             {
-                rocketHintOverlay.SetActive(show);
+                // Apply rocket hint sprite based on current color
+                switch (cubeColor)
+                {
+                    case ObjectColor.Red:
+                        spriteRenderer.sprite = redCubeRocketHintSprite;
+                        break;
+                    case ObjectColor.Green:
+                        spriteRenderer.sprite = greenCubeRocketHintSprite;
+                        break;
+                    case ObjectColor.Blue:
+                        spriteRenderer.sprite = blueCubeRocketHintSprite;
+                        break;
+                    case ObjectColor.Yellow:
+                        spriteRenderer.sprite = yellowCubeRocketHintSprite;
+                        break;
+                }
+            }
+            else
+            {
+                // Restore regular sprite
+                SetSprite(null); // This will trigger your existing SetSprite method
             }
         }
 }

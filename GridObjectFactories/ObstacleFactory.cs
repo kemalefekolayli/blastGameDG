@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Reflection;
 
 public class ObstacleFactory : MonoBehaviour
 {
@@ -80,11 +81,16 @@ public class ObstacleFactory : MonoBehaviour
             if (vase != null)
             {
                 vase.Initialize(gridManager, gridPos);
-                vase.GetComponent<SpriteRenderer>().sprite = vaseSprite;
+                SpriteRenderer sr = vase.GetComponent<SpriteRenderer>();
+                if (sr != null && vaseSprite != null)
+                {
+                    sr.sprite = vaseSprite;
+                }
 
-                // Store the damaged sprite reference
-                SerializedField damagedSpriteField = typeof(VaseObstacle).GetField("damagedSprite",
-                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                // Store the damaged sprite reference using reflection
+                FieldInfo damagedSpriteField = typeof(VaseObstacle).GetField("damagedSprite",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+
                 if (damagedSpriteField != null)
                 {
                     damagedSpriteField.SetValue(vase, damagedVaseSprite);
