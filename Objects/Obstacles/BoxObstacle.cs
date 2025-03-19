@@ -1,4 +1,4 @@
-
+using UnityEngine;
 
 // Box Obstacle Implementation
 public class BoxObstacle : Obstacle
