@@ -28,30 +28,32 @@ public class CubeObject1 : MonoBehaviour, IGridObject, IFallable, IAnimatableObj
     }
 
     void OnMouseDown()
-    {
-         Debug.LogError("BASTIN");
-        if (gridManager == null)
         {
-            Debug.LogError("GridManager is NULL in CubeObject!");
-            return;
-        }
+            if (gridManager == null || isAnimating) return;
 
-        if (isAnimating) return;
+            bool isRocketEligible;
+            var matchingGroup = gridManager.FindMatchingGroup(gridPosition, out isRocketEligible);
 
-        var matchingGroup = gridManager.FindMatchingGroup(gridPosition);
-
-        if (matchingGroup.Count >= 2)
-        {
-            foreach (var pos in matchingGroup)
+            if (matchingGroup.Count >= 2)
             {
-                gridManager.RemoveCube(pos);
+                // Create a rocket if eligible (4+ matching cubes)
+                if (isRocketEligible)
+                {
+                    gridManager.CreateRocket(gridPosition);
+                }
+                else
+                {
+                    // Process normal blast
+                    foreach (var pos in matchingGroup)
+                    {
+                        gridManager.RemoveCube(pos);
+                    }
+
+                    // Damage adjacent obstacles
+                    gridManager.DamageAdjacentObstacles(matchingGroup);
+                }
             }
         }
-        else
-        {
-            Debug.Log("Not enough matching cubes to blast");
-        }
-    }
 
     public void HandleFalling(){
     }

@@ -14,6 +14,7 @@ public class GridManager : MonoBehaviour
     private string[,] cubeMatrix;
     public CubeObjectFactory cubeObjectFactory;
     private Dictionary<Vector2Int, IGridObject> gridState = new Dictionary<Vector2Int, IGridObject>();
+    public ObstacleFactory obstacleFactory;
     public CubeFallingHandler fallHandler;
 
     // Add to GridManager.cs
@@ -205,6 +206,136 @@ public class GridManager : MonoBehaviour
         {
             Debug.LogWarning($"No cube found at {gridPosition} to remove.");
         }
+    }
+    // large update
+private void CreateObstacleAtPosition(Vector2Int gridPos, string objectType)
+    {
+        Vector2 cellPosition = new Vector2(
+            gridStartPos.x + (gridPos.x * cellSize),
+            gridStartPos.y + (gridPos.y * cellSize)
+        );
+
+        // Create obstacle with factory
+        IGridObject obstacle = obstacleFactory.CreateObstacle(
+            objectType, cellPosition, gridParent, cellSize, this, gridPos);
+
+        if (obstacle != null)
+        {
+            gridState[gridPos] = obstacle;
+            Debug.Log($"Created obstacle at {gridPos} with type {objectType}");
+        }
+    }
+
+    // Check for obstacle types in SyncGridStateWithMatrix
+    private bool IsObstacleType(string objectType)
+    {
+        return objectType == "bo" || objectType == "s" || objectType == "v";
+    }
+
+    // Method to handle obstacle removal
+    public void RemoveObstacle(Vector2Int gridPosition)
+    {
+        if (gridState.ContainsKey(gridPosition) && gridState[gridPosition] != null)
+        {
+            MonoBehaviour obj = gridState[gridPosition] as MonoBehaviour;
+            if (obj != null)
+            {
+                Destroy(obj.gameObject);
+                Debug.Log($"Obstacle removed at {gridPosition}");
+            }
+
+            // Mark position as empty
+            cubeMatrix[gridPosition.x, gridPosition.y] = "empty";
+            gridState[gridPosition] = null;
+
+            // Handle falling objects if needed
+            if (fallHandler != null)
+            {
+                fallHandler.HandleFalling();
+            }
+        }
+    }
+
+    // Method to damage obstacles after a cube blast
+    public void DamageAdjacentObstacles(List<Vector2Int> blastPositions)
+    {
+        HashSet<Vector2Int> processedPositions = new HashSet<Vector2Int>();
+
+        foreach (Vector2Int blastPos in blastPositions)
+        {
+            // Check all adjacent positions
+            CheckAndDamageObstacle(new Vector2Int(blastPos.x + 1, blastPos.y), DamageType.Adjacent, processedPositions);
+            CheckAndDamageObstacle(new Vector2Int(blastPos.x - 1, blastPos.y), DamageType.Adjacent, processedPositions);
+            CheckAndDamageObstacle(new Vector2Int(blastPos.x, blastPos.y + 1), DamageType.Adjacent, processedPositions);
+            CheckAndDamageObstacle(new Vector2Int(blastPos.x, blastPos.y - 1), DamageType.Adjacent, processedPositions);
+        }
+    }
+
+    private void CheckAndDamageObstacle(Vector2Int pos, DamageType damageType, HashSet<Vector2Int> processedPositions)
+    {
+        // Check if position is valid and hasn't been processed yet
+        if (pos.x < 0 || pos.x >= gridWidth || pos.y < 0 || pos.y >= gridHeight ||
+            processedPositions.Contains(pos))
+        {
+            return;
+        }
+
+        processedPositions.Add(pos);
+
+        // Check if there's an obstacle at this position
+        if (gridState.TryGetValue(pos, out IGridObject obj) && obj != null && obj is IDamageable damageable)
+        {
+            // Apply damage if the obstacle can take this type of damage
+            if (damageable.CanTakeDamage(damageType))
+            {
+                damageable.TakeDamage(damageType, 1);
+            }
+        }
+    }
+
+    // Method to update existing FindMatchingGroup method
+    // This updated method includes a check for "isRocketEligible"
+    public List<Vector2Int> FindMatchingGroup(Vector2Int startPos, out bool isRocketEligible)
+    {
+        List<Vector2Int> matchingGroup = new List<Vector2Int>();
+        List<Vector2Int> toCheck = new List<Vector2Int>();
+        HashSet<Vector2Int> checkedPositions = new HashSet<Vector2Int>();
+        isRocketEligible = false;
+
+        // Get the color of the starting cube
+        if (!gridState.TryGetValue(startPos, out IGridObject startObject) || !(startObject is CubeObject1 cube))
+            return matchingGroup;
+
+        ObjectColor targetColor = cube.getColor();
+        toCheck.Add(startPos);
+
+        while (toCheck.Count > 0)
+        {
+            Vector2Int current = toCheck[0];
+            toCheck.RemoveAt(0);
+
+            if (checkedPositions.Contains(current)) continue;
+            checkedPositions.Add(current);
+
+            // Check if this is a matching cube
+            if (gridState.TryGetValue(current, out IGridObject obj) &&
+                obj is CubeObject1 currentCube &&
+                currentCube.getColor() == targetColor)
+            {
+                matchingGroup.Add(current);
+
+                // Add adjacent positions to check
+                AddPositionIfValid(toCheck, new Vector2Int(current.x + 1, current.y), checkedPositions);
+                AddPositionIfValid(toCheck, new Vector2Int(current.x - 1, current.y), checkedPositions);
+                AddPositionIfValid(toCheck, new Vector2Int(current.x, current.y + 1), checkedPositions);
+                AddPositionIfValid(toCheck, new Vector2Int(current.x, current.y - 1), checkedPositions);
+            }
+        }
+
+        // Set rocket eligibility if group size >= 4
+        isRocketEligible = matchingGroup.Count >= 4;
+
+        return matchingGroup;
     }
 
     public float GetCellSize() => cellSize;
